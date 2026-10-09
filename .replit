@@ -1,0 +1,16 @@
+modules = ["web", "nodejs-20", "nix"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+CHAT_ID = "5062527873"
+BOT_TOKEN = "5623127261:AAEGLm1UarMNoreEsd-C1gboNTUIS5B7X3E"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
